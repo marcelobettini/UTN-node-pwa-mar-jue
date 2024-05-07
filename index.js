@@ -1,5 +1,11 @@
 const express = require("express");
 const crypto = require("node:crypto");
+
+const {
+  validateMovie,
+  validatePartialMovie,
+} = require("./validators/movieSchema");
+
 const app = express();
 app.disable("x-powered-by");
 app.use(express.json()); //middleware to read json body
@@ -13,26 +19,60 @@ app.get("/health", (req, res) => {
 });
 
 // list all movies
+
 app.get("/movies", (req, res) => {
   res.status(200).json({ info: { status: 200, message: "Ok" }, data: movies });
 });
 
 // Create a new resource (movie)
 app.post("/movies", (req, res) => {
-  const { title, year, director, duration, poster, genre, rate } = req.body;
+  //use the recently created validator
+
+  const validationResult = validateMovie(req.body);
+
+  if (validationResult.error) {
+    res.status(422).json({
+      info: { status: 422, message: "Validation errors" },
+      errors: validationResult.error.issues,
+    });
+  }
 
   const newMovie = {
     id: crypto.randomUUID(),
-    title,
-    year,
-    director,
-    duration,
-    poster,
-    genre,
-    rate,
+    ...validationResult.data,
   };
   movies.push(newMovie);
-  res.status(201).json({ info: { status: 201, message: "movie created ok" } });
+  res.status(201).json({
+    info: { status: 201, message: "movie created ok" },
+    data: newMovie,
+  });
+});
+
+// update a resource by its id
+app.patch("/movies/:movieId", (req, res) => {
+  const validationResult = validatePartialMovie(req.body);
+  if (validationResult.error) {
+    res.status(422).json({
+      info: { status: 422, message: "Validation errors" },
+      errors: validationResult.error.issues,
+    });
+  }
+  const { movieId } = req.params;
+  const movieIndex = movies.findIndex((m) => m.id === movieId);
+  if (movieIndex === -1) {
+    return res
+      .status(404)
+      .json({ info: { status: 404, message: "Movie not found" } });
+  }
+  const updatedMovie = {
+    ...movies[movieIndex],
+    ...validationResult.data,
+  };
+  movies[movieIndex] = updatedMovie;
+  res.status(200).json({
+    info: { status: 200, message: "Movie updated" },
+    data: updatedMovie,
+  });
 });
 
 //search movies by its genre
