@@ -1,17 +1,19 @@
-const {
+import {
   validateMovie,
   validatePartialMovie,
-} = require("../validators/movieSchema");
+} from "../validators/movieSchema.js";
+import { MovieModel } from "../model/movie.js";
 
-const movies = require("../model/data.json");
-const crypto = require("node:crypto");
-
-class MovieController {
-  static getAllMovies(req, res) {
-    res.header("Access-Control-Allow-Origin", "http://127.0.0.1:5500");
-    res
-      .status(200)
-      .json({ info: { status: 200, message: "Ok" }, data: movies });
+export class MovieController {
+  static async getAllMovies(req, res) {
+    const movies = await MovieModel.getAll();
+    movies
+      ? res
+          .status(200)
+          .json({ info: { status: 200, message: "Ok" }, data: movies })
+      : res
+          .status(404)
+          .json({ info: { status: 404, message: "No movies in database" } });
   }
 
   static createMovie(req, res) {
@@ -74,7 +76,7 @@ class MovieController {
     res.status(200).json({ info: { status: 200, message: "Ok" }, data: movie });
   }
   static deleteById(req, res) {
-    res.header("Access-Control-Allow-Origin", "http://127.0.0.1:5500");
+    // res.header("Access-Control-Allow-Origin", "http://127.0.0.1:5500");
     /*si solo agregamos el header "Access-Control-Allow-Origin" seguirá fallando. Notemos que debajo de la petición, en la pestaña de red, nos aparece otra. El tipo será OPTIONS o Preflight. Por qué? Porque CORS diferencia dos tipos de métodos:
   1- GET, HEAD y POST *con estos estamos bien con lo que ya sabemos
   2- PUT, PATCH Y DELETE **en estos casos se origina un CORS-Pre-Flight -> se dispara una petición previa de tipo OPTIONS que le pregunta a la API si autorizaría una petición PUT, PATCH o DELETE. Agregaremos una nueva configuración a app: 
@@ -92,4 +94,3 @@ class MovieController {
     return res.status(204).json({ status: 204, message: "Movie deteled." });
   }
 }
-module.exports = MovieController;

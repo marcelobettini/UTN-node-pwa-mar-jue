@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "API para el curso web avanzando UTN",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
@@ -11,7 +12,9 @@
   "author": "undefined <profe Marce/>",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.19.2",
+    "mysql2": "^3.9.7",
     "zod": "^3.23.6"
   }
 }

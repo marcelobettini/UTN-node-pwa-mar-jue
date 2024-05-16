@@ -1,6 +1,6 @@
-const router = require("express").Router();
-
-const MovieController = require("../controller/movies.js");
+import { Router } from "express";
+export const router = Router();
+import { MovieController } from "../controller/movies.js";
 
 // list all movies
 router.get("/", MovieController.getAllMovies);
@@ -17,4 +17,3 @@ router.get("/search", MovieController.searchByGenre);
 //get a movie by its id
 router.get("/:movieId", MovieController.getById);
 router.delete("/:movieId", MovieController.deleteById);
-module.exports = router;

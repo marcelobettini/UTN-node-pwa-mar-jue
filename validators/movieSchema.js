@@ -1,4 +1,4 @@
-const z = require("zod");
+import z from "zod";
 const currentYear = new Date().getFullYear();
 const movieSchema = z.object({
   title: z
@@ -33,11 +33,9 @@ const movieSchema = z.object({
     .array(),
 });
 
-function validateMovie(object) {
+export function validateMovie(object) {
   return movieSchema.safeParse(object);
 }
-function validatePartialMovie(object) {
+export function validatePartialMovie(object) {
   return movieSchema.partial().safeParse(object);
 }
-
-module.exports = { validateMovie, validatePartialMovie };
