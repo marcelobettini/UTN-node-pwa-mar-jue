@@ -39,8 +39,23 @@ export class MovieModel {
     return movies.length ? movies : null;
   }
   //get a  movie by its id
-  static async searchById(id) {
-    const movies = [];
-    return movies.length ? movie : null;
+  static async searchById(movieId) {
+    const [movie, _info] = await db.query(
+      `select title, year, director, bin_to_uuid(id) ID
+from movies
+where id = uuid_to_bin(?)`,
+      [movieId]
+    );
+    return movie.length ? movie : null;
+  }
+
+  //delete a movie by its id
+  static async deleteById(movieId) {
+    const [info] = await db.query(
+      `DELETE FROM movies 
+      WHERE id = uuid_to_bin(?) `,
+      [movieId]
+    );
+    return info.affectedRows;
   }
 }
