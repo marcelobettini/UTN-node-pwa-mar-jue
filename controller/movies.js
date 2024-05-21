@@ -16,6 +16,21 @@ export class MovieController {
           .json({ info: { status: 404, message: "No movies in database" } });
   }
 
+  //List all movies according to the genre query param
+  static async searchByGenre(req, res) {
+    const { genre } = req.query;
+    const filteredByGenre = await MovieModel.searchByGenre(genre);
+    if (!filteredByGenre) {
+      res.json({ info: { status: 404, message: "No movies in that genre" } });
+    } else {
+      res.json({ info: { status: 200, message: "Ok" }, data: filteredByGenre });
+    }
+  }
+  //List a movie by its id
+  static getById(req, res) {
+    //todo call the searchById MovieModel.method
+    res.status(200).json({ info: { status: 200, message: "Ok" }, data: movie });
+  }
   static createMovie(req, res) {
     const validationResult = validateMovie(req.body);
     if (validationResult.error) {
@@ -59,21 +74,6 @@ export class MovieController {
       info: { status: 200, message: "Movie updated" },
       data: updatedMovie,
     });
-  }
-  static searchByGenre(req, res) {
-    const { genre } = req.query;
-    const filteredByGenre = movies.filter((m) =>
-      m.genre.some((g) => g.toLocaleLowerCase() === genre.toLocaleLowerCase())
-    );
-    if (filteredByGenre.length === 0) {
-      res.json({ info: { status: 404, message: "No movies in that genre" } });
-    } else {
-      res.json({ info: { status: 200, message: "Ok" }, data: filteredByGenre });
-    }
-  }
-  static getById(req, res) {
-    const movie = movies.find((m) => m.id === req.params.movieId);
-    res.status(200).json({ info: { status: 200, message: "Ok" }, data: movie });
   }
   static deleteById(req, res) {
     // res.header("Access-Control-Allow-Origin", "http://127.0.0.1:5500");
