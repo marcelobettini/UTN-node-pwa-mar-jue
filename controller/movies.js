@@ -59,48 +59,79 @@ export class MovieController {
       res.status(404).json({ status: 404, message: "Movie Not Found" });
     }
   }
-  static createMovie(req, res) {
-    const validationResult = validateMovie(req.body);
+
+  //Create a new movie
+  static async createMovie(req, res) {
+    const { title, year, director, duration, poster, genre, rate } = req.body;
+    const validationResult = validateMovie({
+      title,
+      year: Number(year),
+      director,
+      duration: Number(duration),
+      genre: genre.split(", "),
+      poster,
+      rate: Number(rate),
+    });
     if (validationResult.error) {
       res.status(422).json({
         info: { status: 422, message: "Validation errors" },
         errors: validationResult.error.issues,
       });
     }
-    const newMovie = {
-      id: crypto.randomUUID(),
+
+    const movieCreated = await MovieModel.createOne({
       ...validationResult.data,
-    };
-    movies.push(newMovie);
-    res.status(201).json({
-      info: { status: 201, message: "movie created ok" },
-      data: newMovie,
     });
+    movieCreated
+      ? res.status(201).json({
+          info: { status: 201, message: "movie created ok" },
+          data: { ...validationResult.data },
+        })
+      : res
+          .status(500)
+          .json({ info: { status: 500, message: "Internal Server Error" } });
   }
 
-  static updateById(req, res) {
+  // update an existing record
+  static async updateById(req, res) {
+    const { movieId } = req.params;
+    if (!isValidUUID(movieId)) {
+      return res
+        .status(400)
+        .json({ status: 400, message: "UUID Invalid format" });
+    }
+    const isMovie = await MovieModel.searchById(movieId);
+    if (isMovie === null) {
+      return res
+        .status(404)
+        .json({ info: { status: 404, message: "Película no encontrada" } });
+    }
+
     const validationResult = validatePartialMovie(req.body);
     if (validationResult.error) {
-      res.status(422).json({
+      return res.status(422).json({
         info: { status: 422, message: "Validation errors" },
         errors: validationResult.error.issues,
       });
     }
-    const { movieId } = req.params;
-    const movieIndex = movies.findIndex((m) => m.id === movieId);
-    if (movieIndex === -1) {
-      return res
-        .status(404)
-        .json({ info: { status: 404, message: "Movie not found" } });
+    if (!Object.keys(validationResult.data).length) {
+      return res.status(422).json({
+        info: {
+          status: 422,
+          message: "You must include one valid field at least",
+        },
+      });
     }
-    const updatedMovie = {
-      ...movies[movieIndex],
-      ...validationResult.data,
-    };
-    movies[movieIndex] = updatedMovie;
-    res.status(200).json({
-      info: { status: 200, message: "Movie updated" },
-      data: updatedMovie,
-    });
+    const updatedMovie = await MovieModel.updateById(
+      movieId,
+      validationResult.data
+    );
+    updatedMovie
+      ? res.status(200).json({
+          info: { status: 200, message: "Movie successfully updated" },
+        })
+      : res
+          .status(500)
+          .json({ info: { status: 500, message: "Internal Server Error" } });
   }
 }

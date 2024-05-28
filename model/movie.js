@@ -43,7 +43,8 @@ export class MovieModel {
     const [movie, _info] = await db.query(
       `select title, year, director, bin_to_uuid(id) ID
 from movies
-where id = uuid_to_bin(?)`,
+where id = uuid_to_bin(?)
+`,
       [movieId]
     );
     return movie.length ? movie : null;
@@ -56,6 +57,44 @@ where id = uuid_to_bin(?)`,
       WHERE id = uuid_to_bin(?) `,
       [movieId]
     );
+    return info.affectedRows;
+  }
+
+  //create a new movie
+  static async createOne(movie) {
+    const { title, director, year, duration, poster, rate, genre } = movie;
+    const [result, info] = await db.query(
+      `
+      INSERT INTO movies (title, director, year, duration, poster, rate) VALUES 
+      (?,?,?,?,?,?)
+      `,
+      [title, director, year, duration, poster, rate]
+    );
+    for (const gen of genre) {
+      await db.query(
+        `INSERT INTO movie_genres (movie_id, genre_id)
+        SELECT m.id, g.id
+        FROM movies m
+        JOIN genres g ON m.title = ? AND g.name IN ('${gen}')`,
+        [title, info]
+      );
+    }
+    return result ? result : null;
+  }
+
+  //partial update of an existing movie
+  static async updateById(id, partialMovie) {
+    let partialQuery = "";
+    for (const key in partialMovie) {
+      partialQuery += `${key} = '${partialMovie[key]}', `;
+    }
+
+    partialQuery = partialQuery.slice(0, -2);
+    const [info] = await db.query(
+      `UPDATE movies m SET ${partialQuery} WHERE m.id = UUID_TO_BIN(?)`,
+      [id]
+    );
+
     return info.affectedRows;
   }
 }
